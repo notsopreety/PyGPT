@@ -1,6 +1,5 @@
 const readline = require('readline');
 const Replicate = require('replicate');
-const clearScreen = require('clear-screen');
 
 // Set your Replicate API key here
 const REPLICATE_API_KEY = 'r8_dyCs0exhBet4pIqrmJtdya4Joj7rCqE00CWQp';
@@ -18,17 +17,14 @@ function printLlamaBanner() {
   console.log(`
   ________        .__  .__       .___ __________.__
  /  _____/   ____ |  | |__| ____ |   |\______   \__| ____   ____
-/   \  ___  /  _ \|  | |  |/  _ \|   | |    |  _/  |/ __ \ /    \\
-\    \_\  \(  <_> )  |_|  (  <_> )   | |    |   \  \  ___/|   |  \\
- \______  / \____/|____/__|\____/|___| |______  /__|\___  >___|  /
-        \/                                    \/     \/     \/
+/   \\  ___  /  _ \\|  | |  |/  _ \\|   | |    |  _/  |/ __ \\ /    \\
+\\    \\_\\  \\(  <_> )  |_|  (  <_> )   | |    |   \\  \\  ___/|   |  \\
+ \\______  / \\____/|____/__|\\____/|___| |______  /__|\\___  >___|  /
+        \\/                                    \\/     \\/     \\/
 `);
 }
 
 async function runReplicate(prompt) {
-  clearScreen();
-  printLlamaBanner();
-
   const input = {
     prompt,
   };
@@ -37,7 +33,8 @@ async function runReplicate(prompt) {
     const stream = replicate.stream('meta/llama-2-70b-chat', { input });
 
     for await (const event of stream) {
-      process.stdout.write(event.toString());
+      const message = event.toString();
+      process.stdout.write(`${message}\n`);
     }
   } catch (error) {
     console.error('Error during replication:', error);
@@ -45,13 +42,21 @@ async function runReplicate(prompt) {
 }
 
 async function startChat() {
+  printLlamaBanner();
+
   let userPrompt = '';
 
   while (userPrompt.toLowerCase() !== 'exit') {
+    // Print a line under the logo
+    console.log('-'.repeat(50));
+
     userPrompt = await askUserPrompt();
     if (userPrompt.toLowerCase() !== 'exit') {
       await runReplicate(userPrompt);
     }
+
+    // Close the line after each interaction
+    console.log('-'.repeat(50));
   }
 
   rl.close();
