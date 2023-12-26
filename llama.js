@@ -1,73 +1,55 @@
 const readline = require('readline');
 const Replicate = require('replicate');
+const clear = require('clear');
 
-// Set your Replicate API key here
-const REPLICATE_API_KEY = 'r8_dyCs0exhBet4pIqrmJtdya4Joj7rCqE00CWQp';
+const REPLICATE_API_TOKEN = "r8_dyCs0exhBet4pIqrmJtdya4Joj7rCqE00CWQp";
 
 const replicate = new Replicate({
-  auth: REPLICATE_API_KEY,
+  auth: REPLICATE_API_TOKEN,
 });
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-function printLlamaBanner() {
-  console.log(`
-  ________        .__  .__       .___ __________.__
- /  _____/   ____ |  | |__| ____ |   |\______   \__| ____   ____
-/   \\  ___  /  _ \\|  | |  |/  _ \\|   | |    |  _/  |/ __ \\ /    \\
-\\    \\_\\  \\(  <_> )  |_|  (  <_> )   | |    |   \\  \\  ___/|   |  \\
- \\______  / \\____/|____/__|\\____/|___| |______  /__|\\___  >___|  /
-        \\/                                    \\/     \\/     \\/
-`);
-}
-
-async function runReplicate(prompt) {
-  const input = {
-    prompt,
-  };
-
-  try {
-    const stream = replicate.stream('meta/llama-2-70b-chat', { input });
-
-    for await (const event of stream) {
-      const message = event.toString();
-      process.stdout.write(`${message}\n`);
-    }
-  } catch (error) {
-    console.error('Error during replication:', error);
-  }
-}
-
-async function startChat() {
-  printLlamaBanner();
-
-  let userPrompt = '';
-
-  while (userPrompt.toLowerCase() !== 'exit') {
-    // Print a line under the logo
-    console.log('-'.repeat(50));
-
-    userPrompt = await askUserPrompt();
-    if (userPrompt.toLowerCase() !== 'exit') {
-      await runReplicate(userPrompt);
-    }
-
-    // Close the line after each interaction
-    console.log('-'.repeat(50));
-  }
-
-  rl.close();
-}
-
-function askUserPrompt() {
-  return new Promise((resolve) => {
-    rl.question('Enter your prompt (type "exit" to end): ', (answer) => {
-      resolve(answer);
-    });
+// Function to start a conversation based on user input
+const startConversation = async () => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
-}
 
-startChat();
+  // Prompt the user to enter a custom prompt
+  rl.question("You: ", async (userPrompt) => {
+    const input = {
+      prompt: userPrompt,
+    };
+
+    // Close the readline interface
+    rl.close();
+
+    // Stream events based on the user-defined prompt
+    for await (const event of replicate.stream("meta/llama-2-70b-chat", { input })) {
+      process.stdout.write(event.toString());
+    }
+
+    // Draw a line to separate conversations
+    console.log("\n" + "-".repeat(30) + "\n");
+
+    // Start a new conversation after the current one ends
+    startConversation();
+  });
+};
+
+// Clear the screen and print "About LLAMA" once at the beginning
+clear();
+console.log(`
+██╗     ██╗      █████╗ ███╗   ███╗ █████╗
+██║     ██║     ██╔══██╗████╗ ████║██╔══██╗
+██║     ██║     ███████║██╔████╔██║███████║
+██║     ██║     ██╔══██║██║╚██╔╝██║██╔══██║
+███████╗███████╗██║  ██║██║ ╚═╝ ██║██║  ██║
+╚══════╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝-70B
+-----------------------------------------------
+Powerful AI ChatBot By Meta With 70B Parameters
+-----------------------------------------------
+`);
+
+// Start the initial conversation
+startConversation();
